@@ -3,19 +3,24 @@
 ## 📝 Cómo personalizar la información
 
 ### Paso 1: Editar información general
+
 Abre `index.html` y busca la sección "Información General" para cambiar:
+
 - Nombre del proyecto
 - Tu nombre
 - Estado del proyecto
 - Información de contacto
 
 ### Paso 2: Actualizar anuncios
+
 En la sección "Anuncios y Notas" puedes:
+
 - Cambiar horarios de reuniones
 - Actualizar fechas límite
 - Agregar recordatorios importantes
 
 ### Paso 3: Añadir archivos reales
+
 1. Coloca tus archivos en la carpeta `files/`
 2. En el HTML, busca la sección "Archivos Compartidos"
 3. Actualiza cada elemento `.file-item` con:
@@ -25,10 +30,13 @@ En la sección "Anuncios y Notas" puedes:
    - Nombre correcto en la función `downloadFile()`
 
 ### Paso 4: Activar descargas reales
+
 Descomenta las líneas en la función `downloadFile()` y elimina el `alert()` de prueba.
 
 ### Paso 5: Estilizar tu página
+
 Puedes cambiar:
+
 - Colores en el CSS (busca los códigos de color como `#3498db`)
 - Fuentes en la sección `font-family`
 - Espaciado y tamaños
