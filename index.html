@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ejemplo Web Estática con Plotly</title>
+  <!-- Cargar librería de Plotly desde CDN -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+    }
+    #grafico {
+      width: 80%;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gráfico interactivo en página estática</h1>
+  <p style="text-align:center">
+    Este gráfico se genera únicamente en el navegador con JavaScript (sin servidor).
+  </p>
+  <div id="grafico"></div>
+
+  <script>
+    // Datos de ejemplo (podrías reemplazarlos con exportaciones de Python)
+    var datos = [{
+      x: [0, 1, 2, 3, 4, 5],
+      y: [0, 1, 4, 9, 16, 25],
+      mode: 'lines+markers',
+      name: 'x²',
+      line: {color: 'blue'}
+    }];
+
+    var layout = {
+      title: 'Ejemplo de curva cuadrática',
+      xaxis: {title: 'X'},
+      yaxis: {title: 'Y = X²'}
+    };
+
+    Plotly.newPlot('grafico', datos, layout);
+  </script>
+</body>
+</html>
