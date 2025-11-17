@@ -263,6 +263,18 @@
     <!-- Files Section -->
     <div class="files-section">
       <h2>📁 Archivos Compartidos</h2>
+      <!-- CSV Upload: permite subir un CSV con URLs o rutas relativas -->
+      <div class="card" style="margin-bottom:20px;">
+        <h2 style="border-bottom-color: #2ecc71;">📥 Subir CSV para descargas masivas</h2>
+        <div style="margin-top:10px;">
+          <input id="csvFileInput" type="file" accept=".csv" />
+          <button id="processCsvBtn" class="download-btn">Procesar CSV y descargar</button>
+        </div>
+        <div id="csvProgress" style="margin-top:12px;color:#2c3e50;font-weight:600;"></div>
+        <div id="csvLog" style="margin-top:10px;font-size:0.9em;color:#444;white-space:pre-wrap;max-height:140px;overflow:auto;background:#f8f9fa;padding:10px;border-radius:8px;border:1px solid #e9ecef;">
+          Información de proceso...
+        </div>
+      </div>
       <div class="file-grid">
         <div class="file-item">
           <div class="file-icon">📄</div>
@@ -372,6 +384,150 @@
         }, 300);
       }, 4000);
     }
+
+    /* ======= Nueva funcionalidad: procesar CSV y descargar archivos ======= */
+    // Parser CSV simple que maneja comillas y comas dentro de campos
+    function parseCSV(text) {
+      const lines = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (inQuotes && text[i+1] === '"') { // escape ""
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === '\n' && !inQuotes) {
+          lines.push(cur.replace(/\r$/, '').trim());
+          cur = '';
+        } else {
+          cur += ch;
+        }
+      }
+      if (cur.length) lines.push(cur.replace(/\r$/, '').trim());
+      // Si el CSV tiene varias columnas, intentamos extraer la primera columna o buscar 'url' en header
+      const rows = lines.map(l => {
+        // Split on commas not inside quotes
+        const cols = [];
+        let c = '';
+        let q = false;
+        for (let i=0;i<l.length;i++){
+          const ch = l[i];
+          if (ch === '"') { if (q && l[i+1]==='"'){ c+='"'; i++; } else q = !q; }
+          else if (ch === ',' && !q) { cols.push(c); c=''; }
+          else c+=ch;
+        }
+        cols.push(c);
+        return cols.map(x=>x.trim().replace(/^"|"$/g, ''));
+      }).filter(r=>r.length>0 && !(r.length===1 && r[0]===''));
+
+      // If header contains 'url' use that column
+      if (rows.length > 1) {
+        const header = rows[0].map(h=>h.toLowerCase());
+        const idx = header.indexOf('url');
+        if (idx !== -1) return rows.slice(1).map(r=>r[idx]);
+      }
+      // Otherwise take first column of each row
+      return rows.map(r=>r[0]);
+    }
+
+    async function fetchAndDownload(url, timeout = 30000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const resp = await fetch(url, {signal: controller.signal});
+        clearTimeout(id);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const blob = await resp.blob();
+        // Infer filename
+        let filename = url.split('?')[0].split('/').pop() || 'download';
+        // fallback extension
+        if (!filename.includes('.') && blob.type) {
+          const ext = blob.type.split('/')[1]; if (ext) filename += '.' + ext;
+        }
+        const link = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(()=>URL.revokeObjectURL(objectUrl), 10000);
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: String(err) };
+      }
+    }
+
+    // Pool concurrency
+    async function downloadList(urls, concurrency = 3, onProgress) {
+      const results = [];
+      let index = 0;
+      const failures = [];
+      async function worker() {
+        while (index < urls.length) {
+          const i = index++;
+          const u = urls[i];
+          onProgress && onProgress(i, urls.length, u);
+          const res = await fetchAndDownload(u).catch(e=>({ok:false,error:String(e)}));
+          if (!res.ok) failures.push({url:u, error: res.error});
+          results[i] = res;
+        }
+      }
+      const workers = [];
+      for (let i=0;i<concurrency;i++) workers.push(worker());
+      await Promise.all(workers);
+      return {results, failures};
+    }
+
+    function generateErrorReport(failures) {
+      if (!failures || failures.length===0) return null;
+      const lines = failures.map(f => `${f.url} --> ${f.error}`);
+      const blob = new Blob([lines.join('\r\n')], {type: 'text/plain'});
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = 'errores_descarga.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(()=>URL.revokeObjectURL(url), 10000);
+      return blob;
+    }
+
+    // Hook UI
+    document.addEventListener('DOMContentLoaded', () => {
+      const fileInput = document.getElementById('csvFileInput');
+      const btn = document.getElementById('processCsvBtn');
+      const progress = document.getElementById('csvProgress');
+      const log = document.getElementById('csvLog');
+
+      btn.addEventListener('click', async () => {
+        log.textContent = '';
+        if (!fileInput.files || fileInput.files.length===0) { showNotification('Selecciona un archivo CSV antes.','error'); return; }
+        const file = fileInput.files[0];
+        const text = await file.text();
+        const urls = parseCSV(text).filter(u=>u && u.length>0);
+        if (urls.length===0) { showNotification('No se encontraron URLs en el CSV.','error'); return; }
+        showNotification('Iniciando descargas: ' + urls.length + ' archivos','success');
+        progress.textContent = `0 / ${urls.length}`;
+        const onProg = (i, total, u) => {
+          progress.textContent = `${i+1} / ${total}`;
+          log.textContent = `Procesando: ${u}\n` + log.textContent;
+        };
+        // Ejecutar con concurrency 3
+        const {results, failures} = await downloadList(urls, 3, onProg);
+        if (failures.length>0) {
+          showNotification(`Descargados con ${failures.length} errores.`, 'error');
+          generateErrorReport(failures);
+        } else {
+          showNotification('Todas las descargas finalizadas correctamente.', 'success');
+        }
+      });
+    });
     
     // Función para actualizar la fecha automáticamente
     function updateLastModified() {
