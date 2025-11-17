@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Compartir Información - Colegas</title>
+  <title>EarthCARE Data Download</title>
   
   <!-- Favicons completos para todos los dispositivos -->
   <link rel="apple-touch-icon" sizes="57x57" href="apple-icon-57x57.png">
@@ -33,8 +33,8 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
-      color: #333;
-      background: linear-gradient(135deg, #21d1dd 0%, #15948e 100%);
+      color: #e0e0e0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
       min-height: 100vh;
     }
     
@@ -45,22 +45,23 @@
     }
     
     .header {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(45, 45, 45, 0.95);
+      border: 1px solid #404040;
       border-radius: 15px;
       padding: 30px;
       margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       text-align: center;
     }
     
     .header h1 {
-      color: #2c3e50;
+      color: #ffffff;
       margin-bottom: 10px;
       font-size: 2.5em;
     }
     
     .header p {
-      color: #7f8c8d;
+      color: #b0b0b0;
       font-size: 1.1em;
     }
     
@@ -72,51 +73,54 @@
     }
     
     .card {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(45, 45, 45, 0.95);
+      border: 1px solid #404040;
       border-radius: 15px;
       padding: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       transition: transform 0.3s ease;
     }
     
     .card:hover {
       transform: translateY(-5px);
+      border-color: #555;
     }
     
     .card h2 {
-      color: #2c3e50;
+      color: #ffffff;
       margin-bottom: 20px;
       font-size: 1.8em;
-      border-bottom: 3px solid #3498db;
+      border-bottom: 3px solid #4a9eff;
       padding-bottom: 10px;
     }
     
     .info-item {
       margin-bottom: 15px;
       padding: 10px;
-      background: #f8f9fa;
-      border-left: 4px solid #3498db;
+      background: #3a3a3a;
+      border-left: 4px solid #4a9eff;
       border-radius: 5px;
     }
     
     .info-item strong {
-      color: #2c3e50;
+      color: #ffffff;
       display: block;
       margin-bottom: 5px;
     }
     
     .files-section {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(45, 45, 45, 0.95);
+      border: 1px solid #404040;
       border-radius: 15px;
       padding: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
     
     .files-section h2 {
-      color: #2c3e50;
+      color: #ffffff;
       margin-bottom: 20px;
       font-size: 1.8em;
-      border-bottom: 3px solid #e74c3c;
+      border-bottom: 3px solid #ff6b6b;
       padding-bottom: 10px;
     }
     
@@ -127,8 +131,8 @@
     }
     
     .file-item {
-      background: #f8f9fa;
-      border: 2px solid #e9ecef;
+      background: #3a3a3a;
+      border: 2px solid #555;
       border-radius: 10px;
       padding: 20px;
       text-align: center;
@@ -137,30 +141,30 @@
     }
     
     .file-item:hover {
-      border-color: #3498db;
-      background: #e3f2fd;
+      border-color: #4a9eff;
+      background: #454545;
       transform: translateY(-2px);
     }
     
     .file-icon {
       font-size: 3em;
       margin-bottom: 10px;
-      color: #3498db;
+      color: #4a9eff;
     }
     
     .file-name {
       font-weight: bold;
-      color: #2c3e50;
+      color: #ffffff;
       margin-bottom: 5px;
     }
     
     .file-size {
-      color: #7f8c8d;
+      color: #b0b0b0;
       font-size: 0.9em;
     }
     
     .download-btn {
-      background: #3498db;
+      background: #4a9eff;
       color: white;
       border: none;
       padding: 8px 16px;
@@ -172,20 +176,26 @@
     }
     
     .download-btn:hover {
-      background: #2980b9;
+      background: #357abd;
+    }
+    
+    .download-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
     }
     
     .footer {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(45, 45, 45, 0.95);
+      border: 1px solid #404040;
       border-radius: 15px;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       margin-top: 30px;
     }
     
     .footer p {
-      color: #7f8c8d;
+      color: #b0b0b0;
     }
     
     @media (max-width: 768px) {
@@ -211,118 +221,76 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>📋 Centro de Información</h1>
-      <p>Espacio colaborativo para compartir información y recursos</p>
+      <h1>🛰️ EarthCARE Data Download</h1>
+      <p>Scientific data processing and batch download system</p>
     </div>
     
-    <!-- Content Grid -->
-    <div class="content-grid">
-      <!-- Información General -->
-      <div class="card">
-        <h2>📌 Información General</h2>
-        <div class="info-item">
-          <strong>Proyecto Actual:</strong>
-          Desarrollo Web Colaborativo
-        </div>
-        <div class="info-item">
-          <strong>Responsable:</strong>
-          Onel Rodríguez Navarro
-        </div>
-        <div class="info-item">
-          <strong>Estado:</strong>
-          En Progreso
-        </div>
-        <div class="info-item">
-          <strong>Última Actualización:</strong>
-          28 de agosto de 2025
-        </div>
-      </div>
-      
-      <!-- Anuncios y Notas -->
-      <div class="card">
-        <h2>📢 Anuncios y Notas</h2>
-        <div class="info-item">
-          <strong>Reunión Semanal:</strong>
-          Viernes 10:00 AM - Sala de Conferencias
-        </div>
-        <div class="info-item">
-          <strong>Fecha Límite:</strong>
-          Entrega de documentos: 15 de septiembre
-        </div>
-        <div class="info-item">
-          <strong>Recordatorio:</strong>
-          Revisar archivos compartidos regularmente
-        </div>
-        <div class="info-item">
-          <strong>Contacto:</strong>
-          rodrigueznavarro@ugr.es
-        </div>
-      </div>
-    </div>
+
     
     <!-- Files Section -->
     <div class="files-section">
-      <h2>📁 Archivos Compartidos</h2>
+      <h2>📡 Data Downloads</h2>
       <!-- CSV Upload: permite subir un CSV con URLs o rutas relativas -->
       <div class="card" style="margin-bottom:20px;">
-        <h2 style="border-bottom-color: #2ecc71;">📥 Subir CSV para descargas masivas</h2>
+        <h2 style="border-bottom-color: #2ecc71;">📥 Batch CSV Download</h2>
         <div style="margin-top:10px;">
           <input id="csvFileInput" type="file" accept=".csv" />
-          <button id="processCsvBtn" class="download-btn">Procesar CSV y descargar</button>
+          <button id="processCsvBtn" class="download-btn">Process CSV and Download</button>
+          <small style="display:block;margin-top:8px;color:#b0b0b0;">💡 Make sure the Flask server is running</small>
         </div>
-        <div id="csvProgress" style="margin-top:12px;color:#2c3e50;font-weight:600;"></div>
-        <div id="csvLog" style="margin-top:10px;font-size:0.9em;color:#444;white-space:pre-wrap;max-height:140px;overflow:auto;background:#f8f9fa;padding:10px;border-radius:8px;border:1px solid #e9ecef;">
-          Información de proceso...
+        <div id="csvProgress" style="margin-top:12px;color:#ffffff;font-weight:600;"></div>
+        <div id="csvLog" style="margin-top:10px;font-size:0.9em;color:#e0e0e0;white-space:pre-wrap;max-height:140px;overflow:auto;background:#2a2a2a;padding:10px;border-radius:8px;border:1px solid #555;">
+          Process information...
         </div>
       </div>
       <div class="file-grid">
         <div class="file-item">
-          <div class="file-icon">📄</div>
-          <div class="file-name">Documento de Especificaciones</div>
-          <div class="file-size">PDF - 2.5 MB</div>
-          <button class="download-btn" onclick="downloadFile('especificaciones.pdf')">Descargar</button>
+          <div class="file-icon">🛰️</div>
+          <div class="file-name">EarthCARE L1 Products</div>
+          <div class="file-size">NetCDF - 45.2 MB</div>
+          <button class="download-btn" onclick="downloadFile('earthcare_l1.nc')">Download</button>
         </div>
         
         <div class="file-item">
           <div class="file-icon">📊</div>
-          <div class="file-name">Hoja de Cálculo - Presupuesto</div>
-          <div class="file-size">XLSX - 850 KB</div>
-          <button class="download-btn" onclick="downloadFile('presupuesto.xlsx')">Descargar</button>
+          <div class="file-name">Atmospheric Profiles</div>
+          <div class="file-size">HDF5 - 28.5 MB</div>
+          <button class="download-btn" onclick="downloadFile('atmos_profiles.h5')">Download</button>
         </div>
         
         <div class="file-item">
-          <div class="file-icon">🖼️</div>
-          <div class="file-name">Diseños y Mockups</div>
-          <div class="file-size">ZIP - 15.2 MB</div>
-          <button class="download-btn" onclick="downloadFile('disenos.zip')">Descargar</button>
+          <div class="file-icon">☁️</div>
+          <div class="file-name">Cloud Properties Dataset</div>
+          <div class="file-size">ZIP - 156.8 MB</div>
+          <button class="download-btn" onclick="downloadFile('cloud_props.zip')">Download</button>
         </div>
         
         <div class="file-item">
-          <div class="file-icon">📋</div>
-          <div class="file-name">Manual de Procedimientos</div>
-          <div class="file-size">PDF - 1.8 MB</div>
-          <button class="download-btn" onclick="downloadFile('manual.pdf')">Descargar</button>
+          <div class="file-icon">📡</div>
+          <div class="file-name">Radar Measurements</div>
+          <div class="file-size">NetCDF - 89.1 MB</div>
+          <button class="download-btn" onclick="downloadFile('radar_data.nc')">Download</button>
         </div>
         
         <div class="file-item">
-          <div class="file-icon">💾</div>
-          <div class="file-name">Base de Datos de Ejemplo</div>
-          <div class="file-size">SQL - 5.2 MB</div>
-          <button class="download-btn" onclick="downloadFile('database.sql')">Descargar</button>
+          <div class="file-icon">🌍</div>
+          <div class="file-name">Geolocation Data</div>
+          <div class="file-size">CSV - 12.3 MB</div>
+          <button class="download-btn" onclick="downloadFile('geolocation.csv')">Download</button>
         </div>
         
         <div class="file-item">
-          <div class="file-icon">📝</div>
-          <div class="file-name">Plantillas de Documentos</div>
-          <div class="file-size">DOCX - 3.1 MB</div>
-          <button class="download-btn" onclick="downloadFile('plantillas.docx')">Descargar</button>
+          <div class="file-icon">📈</div>
+          <div class="file-name">Processing Reports</div>
+          <div class="file-size">PDF - 8.7 MB</div>
+          <button class="download-btn" onclick="downloadFile('processing_report.pdf')">Download</button>
         </div>
       </div>
     </div>
     
     <!-- Footer -->
     <div class="footer">
-      <p>🔄 Página actualizada automáticamente cada hora | 💡 ¿Necesitas ayuda? Contacta al administrador</p>
+      <p>🔄 Page updated automatically every hour | 💡 Need help? Contact the administrator</p>
     </div>
   </div>
 
@@ -498,7 +466,7 @@
       return blob;
     }
 
-    // Hook UI
+    // Hook UI - Nueva versión que usa backend Python
     document.addEventListener('DOMContentLoaded', () => {
       const fileInput = document.getElementById('csvFileInput');
       const btn = document.getElementById('processCsvBtn');
@@ -507,27 +475,98 @@
 
       btn.addEventListener('click', async () => {
         log.textContent = '';
-        if (!fileInput.files || fileInput.files.length===0) { showNotification('Selecciona un archivo CSV antes.','error'); return; }
+        if (!fileInput.files || fileInput.files.length===0) { 
+          showNotification('Please select a CSV file first.','error'); 
+          return; 
+        }
+        
         const file = fileInput.files[0];
-        const text = await file.text();
-        const urls = parseCSV(text).filter(u=>u && u.length>0);
-        if (urls.length===0) { showNotification('No se encontraron URLs en el CSV.','error'); return; }
-        showNotification('Iniciando descargas: ' + urls.length + ' archivos','success');
-        progress.textContent = `0 / ${urls.length}`;
-        const onProg = (i, total, u) => {
-          progress.textContent = `${i+1} / ${total}`;
-          log.textContent = `Procesando: ${u}\n` + log.textContent;
-        };
-        // Ejecutar con concurrency 3
-        const {results, failures} = await downloadList(urls, 3, onProg);
-        if (failures.length>0) {
-          showNotification(`Descargados con ${failures.length} errores.`, 'error');
-          generateErrorReport(failures);
-        } else {
-          showNotification('Todas las descargas finalizadas correctamente.', 'success');
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+        
+        try {
+          // Enviar CSV al backend Python
+          const formData = new FormData();
+          formData.append('csv', file);
+          
+          showNotification('Sending CSV to server...', 'success');
+          
+          const response = await fetch('/process-csv', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error');
+          }
+          
+          const result = await response.json();
+          const jobId = result.job_id;
+          
+          showNotification(`Starting downloads: ${result.total_urls} files`, 'success');
+          
+          // Monitorear progreso
+          await monitorJobProgress(jobId, progress, log);
+          
+        } catch (error) {
+          showNotification('Error: ' + error.message, 'error');
+          log.textContent = 'Error: ' + error.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Process CSV and Download';
         }
       });
     });
+    
+    async function monitorJobProgress(jobId, progressElement, logElement) {
+      const pollInterval = 1000; // 1 segundo
+      
+      while (true) {
+        try {
+          const response = await fetch(`/job-status/${jobId}`);
+          if (!response.ok) throw new Error('Error consultando estado');
+          
+          const status = await response.json();
+          
+          // Actualizar progreso
+          progressElement.textContent = `${status.completed} / ${status.total}`;
+          
+          // Update log
+          if (status.current_file) {
+            logElement.textContent = `Processing: ${status.current_file}\n` + logElement.textContent;
+          }
+          
+          // Si terminó
+          if (status.finished) {
+            if (status.errors.length > 0) {
+              showNotification(`Download completed with ${status.errors.length} errors.`, 'error');
+            } else {
+              showNotification('All downloads finished successfully.', 'success');
+            }
+            
+            // Download result
+            setTimeout(() => {
+              const downloadLink = document.createElement('a');
+              downloadLink.href = `/download-result/${jobId}`;
+              downloadLink.download = `earthcare_batch_${jobId.slice(0,8)}.zip`;
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+              
+              showNotification('Downloading ZIP file...', 'success');
+            }, 1000);
+            
+            break;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        } catch (error) {
+          showNotification('Error monitoring progress: ' + error.message, 'error');
+          break;
+        }
+      }
+    }
     
     // Función para actualizar la fecha automáticamente
     function updateLastModified() {

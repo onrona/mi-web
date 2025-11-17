@@ -92,9 +92,7 @@ Después de hacer cambios:
 
 ## 📁 Archivos de favicon incluidos
 
-
-```
-mi-web/
+```mi-web/
 ├── favicon.svg              (icono vectorial principal)
 ├── favicon-32x32.png        (para compatibilidad PNG)  
 └── index.html               (con enlaces configurados)
