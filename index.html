@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -184,6 +184,14 @@
       cursor: not-allowed;
     }
     
+    .config-btn:hover {
+      opacity: 0.8;
+    }
+    
+    .config-select:hover {
+      border-color: #4a9eff;
+    }
+    
     .footer {
       background: rgba(45, 45, 45, 0.95);
       border: 1px solid #404040;
@@ -225,65 +233,150 @@
       <p>Scientific data processing and batch download system</p>
     </div>
     
-
-    
-    <!-- Files Section -->
-    <div class="files-section">
-      <h2>📡 Data Downloads</h2>
-      <!-- CSV Upload: permite subir un CSV con URLs o rutas relativas -->
-      <div class="card" style="margin-bottom:20px;">
-        <h2 style="border-bottom-color: #2ecc71;">📥 Batch CSV Download</h2>
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+      <!-- EarthCARE Data Download -->
+      <div class="card">
+        <h2>🛰️ EarthCARE Data Download</h2>
+        
+        <div class="file-grid">
+          <div class="file-item">
+            <div class="file-icon">🛰️</div>
+            <div class="file-name">EarthCARE L1 Products</div>
+            <div class="file-size">NetCDF - 45.2 MB</div>
+            <button class="download-btn" onclick="downloadFile('earthcare_l1.nc')">Download</button>
+          </div>
+          
+          <div class="file-item">
+            <div class="file-icon">📊</div>
+            <div class="file-name">Atmospheric Profiles</div>
+            <div class="file-size">HDF5 - 28.5 MB</div>
+            <button class="download-btn" onclick="downloadFile('atmos_profiles.h5')">Download</button>
+          </div>
+          
+          <div class="file-item">
+            <div class="file-icon">☁️</div>
+            <div class="file-name">Cloud Properties Dataset</div>
+            <div class="file-size">ZIP - 156.8 MB</div>
+            <button class="download-btn" onclick="downloadFile('cloud_props.zip')">Download</button>
+          </div>
+          
+          <div class="file-item">
+            <div class="file-icon">📡</div>
+            <div class="file-name">Radar Measurements</div>
+            <div class="file-size">NetCDF - 89.1 MB</div>
+            <button class="download-btn" onclick="downloadFile('radar_data.nc')">Download</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Download Settings -->
+      <div class="card">
+        <h2 style="border-bottom-color: #2ecc71;">⚙️ Download Settings</h2>
+        
+        <!-- EarthCARE Configuration Panel -->
+        <div class="config-panel" style="margin-bottom: 20px; padding: 15px; background: #2a2a2a; border-radius: 8px; border: 1px solid #555;">
+          <h3 style="color: #ffffff; margin-bottom: 15px; font-size: 1.2em;">🛰️ EarthCARE Configuration</h3>
+          
+          <div class="config-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <!-- Collection Selection -->
+            <div>
+              <label style="display: block; color: #b0b0b0; margin-bottom: 5px; font-weight: 600;">Collection:</label>
+              <select id="collectionSelect" class="config-select" style="width: 100%; padding: 8px; background: #3a3a3a; color: #ffffff; border: 1px solid #555; border-radius: 4px;">
+                <option value="EarthCAREL2InstChecked">EarthCARE L2 Products for Cal/Val Users</option>
+                <option value="EarthCAREL2Validated">EarthCARE ESA L2 Products</option>
+                <option value="EarthCAREL1InstChecked">EarthCARE L1 Products for Cal/Val Users</option>
+                <option value="EarthCAREL1Validated">EarthCARE L1 Products</option>
+                <option value="JAXAL2InstChecked">EarthCARE JAXA L2 Products for Cal/Val Users</option>
+                <option value="JAXAL2Validated">EarthCARE JAXA L2 Products</option>
+                <option value="EarthCAREAuxiliary">EarthCARE Auxiliary Data</option>
+                <option value="EarthCAREOrbitData">EarthCARE Orbit Data</option>
+              </select>
+            </div>
+            
+            <!-- Baseline Selection -->
+            <div>
+              <label style="display: block; color: #b0b0b0; margin-bottom: 5px; font-weight: 600;">Baseline:</label>
+              <select id="baselineSelect" class="config-select" style="width: 100%; padding: 8px; background: #3a3a3a; color: #ffffff; border: 1px solid #555; border-radius: 4px;">
+                <option value="BA">BA (Default)</option>
+                <option value="BB">BB</option>
+                <option value="AC">AC</option>
+                <option value="AD">AD</option>
+                <option value="AE">AE</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Products Selection -->
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; color: #b0b0b0; margin-bottom: 5px; font-weight: 600;">Products (select multiple):</label>
+            <div class="products-container" style="max-height: 200px; overflow-y: auto; background: #3a3a3a; border: 1px solid #555; border-radius: 4px; padding: 10px;">
+              <!-- ATLID Products -->
+              <div class="product-category">
+                <h4 style="color: #4a9eff; margin: 10px 0 5px 0; font-size: 0.9em;">ATLID Products</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px;">
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_FM__2A" style="margin-right: 6px;"> ATL_FM__2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_ALD_2A" style="margin-right: 6px;"> ATL_ALD_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_AER_2A" style="margin-right: 6px;"> ATL_AER_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_ICE_2A" style="margin-right: 6px;"> ATL_ICE_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_TC__2A" style="margin-right: 6px;"> ATL_TC__2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_EBD_2A" style="margin-right: 6px;"> ATL_EBD_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ATL_CTH_2A" style="margin-right: 6px;"> ATL_CTH_2A</label>
+                </div>
+              </div>
+              
+              <!-- CPR Products -->
+              <div class="product-category">
+                <h4 style="color: #4a9eff; margin: 10px 0 5px 0; font-size: 0.9em;">CPR Products</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px;">
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="CPR_FMR_2A" style="margin-right: 6px;"> CPR_FMR_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="CPR_CD__2A" style="margin-right: 6px;"> CPR_CD__2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="CPR_TC__2A" style="margin-right: 6px;"> CPR_TC__2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="CPR_CLD_2A" style="margin-right: 6px;"> CPR_CLD_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="CPR_APC_2A" style="margin-right: 6px;"> CPR_APC_2A</label>
+                </div>
+              </div>
+              
+              <!-- MSI Products -->
+              <div class="product-category">
+                <h4 style="color: #4a9eff; margin: 10px 0 5px 0; font-size: 0.9em;">MSI Products</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px;">
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="MSI_CM__2A" style="margin-right: 6px;"> MSI_CM__2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="MSI_COP_2A" style="margin-right: 6px;"> MSI_COP_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="MSI_AOT_2A" style="margin-right: 6px;"> MSI_AOT_2A</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="MSI_RGR_1C" style="margin-right: 6px;"> MSI_RGR_1C</label>
+                </div>
+              </div>
+              
+              <!-- Combined Products -->
+              <div class="product-category">
+                <h4 style="color: #4a9eff; margin: 10px 0 5px 0; font-size: 0.9em;">Combined Products</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 5px;">
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ACM_CAP_2B" style="margin-right: 6px;"> ACM_CAP_2B</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ACM_COM_2B" style="margin-right: 6px;"> ACM_COM_2B</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ALL_DF__2B" style="margin-right: 6px;"> ALL_DF__2B</label>
+                  <label style="display: flex; align-items: center; color: #e0e0e0; font-size: 0.85em;"><input type="checkbox" value="ALL_3D__2B" style="margin-right: 6px;"> ALL_3D__2B</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Selection Buttons -->
+          <div style="margin-bottom: 10px;">
+            <button type="button" onclick="selectAllProducts()" class="config-btn" style="background: #4a9eff; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 8px; font-size: 0.85em; cursor: pointer;">Select All</button>
+            <button type="button" onclick="clearAllProducts()" class="config-btn" style="background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 8px; font-size: 0.85em; cursor: pointer;">Clear All</button>
+            <button type="button" onclick="selectATLIDProducts()" class="config-btn" style="background: #2ecc71; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 8px; font-size: 0.85em; cursor: pointer;">ATLID Only</button>
+          </div>
+        </div>
+        
         <div style="margin-top:10px;">
           <input id="csvFileInput" type="file" accept=".csv" />
-          <button id="processCsvBtn" class="download-btn">Process CSV and Download</button>
+          <button id="processCsvBtn" class="download-btn">Process EarthCARE CSV</button>
           <small style="display:block;margin-top:8px;color:#b0b0b0;">💡 Make sure the Flask server is running</small>
         </div>
         <div id="csvProgress" style="margin-top:12px;color:#ffffff;font-weight:600;"></div>
         <div id="csvLog" style="margin-top:10px;font-size:0.9em;color:#e0e0e0;white-space:pre-wrap;max-height:140px;overflow:auto;background:#2a2a2a;padding:10px;border-radius:8px;border:1px solid #555;">
           Process information...
-        </div>
-      </div>
-      <div class="file-grid">
-        <div class="file-item">
-          <div class="file-icon">🛰️</div>
-          <div class="file-name">EarthCARE L1 Products</div>
-          <div class="file-size">NetCDF - 45.2 MB</div>
-          <button class="download-btn" onclick="downloadFile('earthcare_l1.nc')">Download</button>
-        </div>
-        
-        <div class="file-item">
-          <div class="file-icon">📊</div>
-          <div class="file-name">Atmospheric Profiles</div>
-          <div class="file-size">HDF5 - 28.5 MB</div>
-          <button class="download-btn" onclick="downloadFile('atmos_profiles.h5')">Download</button>
-        </div>
-        
-        <div class="file-item">
-          <div class="file-icon">☁️</div>
-          <div class="file-name">Cloud Properties Dataset</div>
-          <div class="file-size">ZIP - 156.8 MB</div>
-          <button class="download-btn" onclick="downloadFile('cloud_props.zip')">Download</button>
-        </div>
-        
-        <div class="file-item">
-          <div class="file-icon">📡</div>
-          <div class="file-name">Radar Measurements</div>
-          <div class="file-size">NetCDF - 89.1 MB</div>
-          <button class="download-btn" onclick="downloadFile('radar_data.nc')">Download</button>
-        </div>
-        
-        <div class="file-item">
-          <div class="file-icon">🌍</div>
-          <div class="file-name">Geolocation Data</div>
-          <div class="file-size">CSV - 12.3 MB</div>
-          <button class="download-btn" onclick="downloadFile('geolocation.csv')">Download</button>
-        </div>
-        
-        <div class="file-item">
-          <div class="file-icon">📈</div>
-          <div class="file-name">Processing Reports</div>
-          <div class="file-size">PDF - 8.7 MB</div>
-          <button class="download-btn" onclick="downloadFile('processing_report.pdf')">Download</button>
         </div>
       </div>
     </div>
@@ -353,7 +446,35 @@
       }, 4000);
     }
 
-    /* ======= Nueva funcionalidad: procesar CSV y descargar archivos ======= */
+    /* ======= Funciones para controles EarthCARE ======= */
+    function selectAllProducts() {
+      document.querySelectorAll('.products-container input[type="checkbox"]').forEach(cb => cb.checked = true);
+    }
+    
+    function clearAllProducts() {
+      document.querySelectorAll('.products-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+    
+    function selectATLIDProducts() {
+      clearAllProducts();
+      document.querySelectorAll('.products-container input[value^="ATL_"]').forEach(cb => cb.checked = true);
+    }
+    
+    function getSelectedProducts() {
+      const selected = [];
+      document.querySelectorAll('.products-container input[type="checkbox"]:checked').forEach(cb => {
+        selected.push(cb.value);
+      });
+      return selected;
+    }
+    
+    function getEarthCAREConfig() {
+      return {
+        collection: document.getElementById('collectionSelect').value,
+        baseline: document.getElementById('baselineSelect').value,
+        products: getSelectedProducts()
+      };
+    }
     // Parser CSV simple que maneja comillas y comas dentro de campos
     function parseCSV(text) {
       const lines = [];
@@ -485,9 +606,20 @@
         btn.textContent = 'Procesando...';
         
         try {
-          // Enviar CSV al backend Python
+          // Obtener configuración EarthCARE
+          const config = getEarthCAREConfig();
+          
+          if (config.products.length === 0) {
+            showNotification('Please select at least one product.', 'error');
+            return;
+          }
+          
+          // Enviar CSV y configuración al backend Python
           const formData = new FormData();
-          formData.append('csv', file);
+          formData.append('file', file);
+          formData.append('collection', config.collection);
+          formData.append('baseline', config.baseline);
+          formData.append('products', JSON.stringify(config.products));
           
           showNotification('Sending CSV to server...', 'success');
           
@@ -504,7 +636,8 @@
           const result = await response.json();
           const jobId = result.job_id;
           
-          showNotification(`Starting downloads: ${result.total_urls} files`, 'success');
+          showNotification(`Starting EarthCARE downloads: ${config.products.length} products`, 'success');
+          log.textContent = `Collection: ${config.collection}\nBaseline: ${config.baseline}\nProducts: ${config.products.join(', ')}\n\n`;
           
           // Monitorear progreso
           await monitorJobProgress(jobId, progress, log);

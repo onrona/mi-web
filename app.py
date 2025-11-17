@@ -7,6 +7,7 @@ Integra tu código Python existente con la interfaz web.
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
 import csv
+import json
 import os
 import tempfile
 import zipfile
@@ -17,7 +18,13 @@ import time
 import uuid
 from urllib.parse import urlparse
 from pathlib import Path
+import toml
+from dataclasses import dataclass
+import toml
+from dataclasses import dataclass
 import logging
+from earthcare_downloader import EarthCAREDownloader, DownloadConfig
+from earthcare_downloader import EarthCAREDownloader, DownloadConfig
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -33,158 +40,315 @@ TEMP_DIR.mkdir(exist_ok=True)
 # Estado de trabajos en progreso
 jobs_status = {}
 
-class DownloadProcessor:
-    """Clase que encapsula la lógica de descarga masiva."""
+class EarthCAREProcessor:
+    """Clase que encapsula la lógica de descarga EarthCARE."""
     
-    def __init__(self, job_id):
+    def __init__(self, job_id, collection, products, baseline, job_dir):
         self.job_id = job_id
+        self.collection = collection
+        self.products = products
+        self.baseline = baseline
+        self.job_dir = Path(job_dir)
         self.status = {
             'total': 0,
             'completed': 0,
             'errors': [],
             'current_file': '',
-            'finished': False
+            'finished': False,
+            'collection': collection,
+            'baseline': baseline,
+            'products': products
         }
         jobs_status[job_id] = self.status
     
-    def parse_csv_content(self, csv_content):
-        """
-        Parsea el contenido del CSV y extrae las URLs.
-        Adapta este método según el formato de tu CSV.
-        """
-        urls = []
-        csv_reader = csv.reader(io.StringIO(csv_content))
-        
-        # Leer primera línea para detectar si hay header
-        first_row = next(csv_reader, None)
-        if not first_row:
-            return urls
-        
-        # Buscar columna de URL (case insensitive)
-        header_map = {col.lower(): idx for idx, col in enumerate(first_row)}
-        url_col = None
-        
-        for possible_name in ['url', 'link', 'enlace', 'archivo', 'file']:
-            if possible_name in header_map:
-                url_col = header_map[possible_name]
-                break
-        
-        # Si no encontramos header, asumir que la primera columna son URLs
-        if url_col is None:
-            urls.append(first_row[0].strip())
-            url_col = 0
-        
-        # Procesar resto de filas
-        for row in csv_reader:
-            if len(row) > url_col and row[url_col].strip():
-                urls.append(row[url_col].strip())
-        
-        return [url for url in urls if url and ('http' in url or url.endswith(('.pdf', '.zip', '.doc', '.xlsx', '.txt')))]
-    
-    def download_file(self, url, session, timeout=30):
-        """
-        Descarga un archivo individual.
-        Aquí puedes integrar tu lógica Python existente.
-        """
+    def process_earthcare_csv(self, csv_path):
+        """Procesar CSV usando EarthCARE downloader"""
         try:
-            # Determinar nombre del archivo
-            parsed = urlparse(url)
-            filename = os.path.basename(parsed.path) or 'download'
-            if '.' not in filename:
-                filename += '.file'
+            # Verificar credenciales
+            credentials_file = Path('oads_credentials.toml')
+            if not credentials_file.exists():
+                # Crear archivo de credenciales ejemplo si no existe
+                self._create_default_credentials()
+                raise Exception('Credentials file not found. Please configure oads_credentials.toml')
             
-            # Realizar descarga
-            response = session.get(url, timeout=timeout, stream=True)
-            response.raise_for_status()
+            # Configurar EarthCARE downloader
+            download_dir = self.job_dir / 'earthcare_downloads'
             
-            # Guardar archivo
-            file_path = TEMP_DIR / self.job_id / filename
-            file_path.parent.mkdir(exist_ok=True)
+            config = DownloadConfig(
+                collection=self.collection,
+                products=self.products,
+                baseline=self.baseline,
+                download_directory=str(download_dir),
+                credentials_file=str(credentials_file),
+                max_retries=3,
+                time_tolerance_minutes=11,
+                override_existing=False,
+                log_file=f'earthcare_{self.job_id}.log'
+            )
             
-            with open(file_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            # Crear descargador
+            downloader = EarthCAREDownloader(config)
             
-            return {'success': True, 'filename': filename, 'path': file_path}
+            # Estimar total desde CSV
+            import pandas as pd
+            df = pd.read_csv(csv_path)
+            self.status['total'] = len(df) * len(self.products)
+            
+            self.status['current_file'] = f'Initializing EarthCARE downloader...'
+            
+            # Ejecutar descarga con monitoreo personalizado
+            stats = self._download_with_monitoring(downloader, csv_path)
+            
+            # Crear paquete resultado
+            self._create_earthcare_result_package(download_dir, stats)
+            
+            self.status['finished'] = True
+            self.status['current_file'] = 'Download completed'
             
         except Exception as e:
-            logger.error(f"Error descargando {url}: {str(e)}")
-            return {'success': False, 'error': str(e), 'url': url}
+            self.status['errors'].append({'error': str(e)})
+            self.status['finished'] = True
+            self.status['current_file'] = f'Error: {str(e)}'
+            logger.error(f'EarthCARE processing error: {e}')
     
-    def process_downloads(self, urls):
-        """
-        Procesa todas las descargas.
-        Integra aquí tu código Python existente.
-        """
-        self.status['total'] = len(urls)
-        self.status['completed'] = 0
-        self.status['errors'] = []
+    def _create_default_credentials(self):
+        """Crear archivo de credenciales por defecto"""
+        default_creds = '''
+# EarthCARE OADS Credentials
+# Please update with your actual credentials
+
+[credentials]
+username = "your_email@example.com"
+password = "your_password"
+
+[settings]
+max_retries = 3
+time_tolerance_minutes = 11
+'''
+        with open('oads_credentials.toml', 'w') as f:
+            f.write(default_creds)
+    
+    def _download_with_monitoring(self, downloader, csv_path):
+        """Ejecutar descarga con monitoreo de progreso"""
+        # Monkey patch para monitoreo de progreso
+        original_download_method = downloader._download_product_for_datetime
         
-        # Crear directorio temporal para este job
-        job_dir = TEMP_DIR / self.job_id
-        job_dir.mkdir(exist_ok=True)
-        
-        downloaded_files = []
-        
-        # Sesión para reutilizar conexiones
-        with requests.Session() as session:
-            session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            })
+        def monitored_download(*args, **kwargs):
+            product = args[0] if args else 'Unknown'
+            date_str = args[1] if len(args) > 1 else 'Unknown'
             
-            for i, url in enumerate(urls):
-                self.status['current_file'] = url
-                self.status['completed'] = i
-                
-                logger.info(f"Descargando {i+1}/{len(urls)}: {url}")
-                
-                result = self.download_file(url, session)
-                
-                if result['success']:
-                    downloaded_files.append(result)
-                else:
-                    self.status['errors'].append({
-                        'url': result['url'],
-                        'error': result['error']
-                    })
-                
-                # Pequeña pausa para no sobrecargar servidores
-                time.sleep(0.1)
+            self.status['current_file'] = f'Downloading {product} for {date_str}'
+            self.status['completed'] += 1
+            
+            return original_download_method(*args, **kwargs)
         
-        self.status['completed'] = len(urls)
-        self.status['finished'] = True
+        downloader._download_product_for_datetime = monitored_download
         
-        return self.create_result_package(downloaded_files)
+        # Ejecutar descarga
+        return downloader.download_from_csv(csv_path)
     
-    def create_result_package(self, downloaded_files):
-        """Crea un ZIP con todos los archivos descargados + reporte de errores."""
-        zip_path = TEMP_DIR / f"{self.job_id}_result.zip"
+    def _create_earthcare_result_package(self, download_dir, stats):
+        """Crear paquete ZIP con resultados EarthCARE"""
+        zip_path = TEMP_DIR / f"{self.job_id}_earthcare_result.zip"
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # Añadir archivos descargados
-            for file_info in downloaded_files:
-                if file_info['path'].exists():
-                    zipf.write(file_info['path'], file_info['filename'])
+            if download_dir.exists():
+                for file_path in download_dir.rglob('*'):
+                    if file_path.is_file():
+                        arcname = file_path.relative_to(download_dir)
+                        zipf.write(file_path, arcname)
             
-            # Crear reporte de errores si hay errores
-            if self.status['errors']:
-                error_report = []
-                error_report.append("REPORTE DE ERRORES DE DESCARGA")
-                error_report.append("=" * 50)
-                error_report.append(f"Fecha: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                error_report.append(f"Total URLs: {self.status['total']}")
-                error_report.append(f"Exitosas: {len(downloaded_files)}")
-                error_report.append(f"Errores: {len(self.status['errors'])}")
-                error_report.append("")
-                
-                for error in self.status['errors']:
-                    error_report.append(f"URL: {error['url']}")
-                    error_report.append(f"Error: {error['error']}")
-                    error_report.append("-" * 30)
-                
-                zipf.writestr("errores_descarga.txt", "\n".join(error_report))
+            # Añadir log de descarga
+            log_file = download_dir / f'earthcare_{self.job_id}.log'
+            if log_file.exists():
+                zipf.write(log_file, 'download_log.txt')
+            
+            # Crear resumen de descarga
+            summary = self._create_download_summary(stats)
+            zipf.writestr('download_summary.txt', summary)
         
         return zip_path
+    
+    def _create_download_summary(self, stats):
+        """Crear resumen de la descarga"""
+        summary_lines = [
+            "EarthCARE Download Summary",
+            "=" * 50,
+            f"Job ID: {self.job_id}",
+            f"Collection: {self.collection}",
+            f"Baseline: {self.baseline}",
+            f"Products: {', '.join(self.products)}",
+            f"Date: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            "Statistics:",
+            f"- Total requests: {stats.get('total_requests', 0)}",
+            f"- Successful downloads: {stats.get('successful_downloads', 0)}",
+            f"- Failed downloads: {stats.get('failed_downloads', 0)}",
+            f"- Skipped existing: {stats.get('skipped_existing', 0)}",
+            ""
+        ]
+        
+        if stats.get('errors'):
+            summary_lines.append("Errors:")
+            for error in stats['errors'][:20]:  # Primeros 20 errores
+                summary_lines.append(f"- {error}")
+        
+        return "\n".join(summary_lines)
+    """Clase que encapsula la lógica de descarga EarthCARE."""
+    
+    def __init__(self, job_id, collection, products, baseline, job_dir):
+        self.job_id = job_id
+        self.collection = collection
+        self.products = products
+        self.baseline = baseline
+        self.job_dir = Path(job_dir)
+        self.status = {
+            'total': 0,
+            'completed': 0,
+            'errors': [],
+            'current_file': '',
+            'finished': False,
+            'collection': collection,
+            'baseline': baseline,
+            'products': products
+        }
+        jobs_status[job_id] = self.status
+    
+    def process_earthcare_csv(self, csv_path):
+        """Procesar CSV usando EarthCARE downloader"""
+        try:
+            # Verificar credenciales
+            credentials_file = Path('oads_credentials.toml')
+            if not credentials_file.exists():
+                # Crear archivo de credenciales ejemplo si no existe
+                self._create_default_credentials()
+                raise Exception('Credentials file not found. Please configure oads_credentials.toml')
+            
+            # Configurar EarthCARE downloader
+            download_dir = self.job_dir / 'earthcare_downloads'
+            
+            config = DownloadConfig(
+                collection=self.collection,
+                products=self.products,
+                baseline=self.baseline,
+                download_directory=str(download_dir),
+                credentials_file=str(credentials_file),
+                max_retries=3,
+                time_tolerance_minutes=11,
+                override_existing=False,
+                log_file=f'earthcare_{self.job_id}.log'
+            )
+            
+            # Crear descargador
+            downloader = EarthCAREDownloader(config)
+            
+            # Estimar total desde CSV
+            import pandas as pd
+            df = pd.read_csv(csv_path)
+            self.status['total'] = len(df) * len(self.products)
+            
+            self.status['current_file'] = f'Initializing EarthCARE downloader...'
+            
+            # Ejecutar descarga con monitoreo personalizado
+            stats = self._download_with_monitoring(downloader, csv_path)
+            
+            # Crear paquete resultado
+            self._create_earthcare_result_package(download_dir, stats)
+            
+            self.status['finished'] = True
+            self.status['current_file'] = 'Download completed'
+            
+        except Exception as e:
+            self.status['errors'].append({'error': str(e)})
+            self.status['finished'] = True
+            self.status['current_file'] = f'Error: {str(e)}'
+            logger.error(f'EarthCARE processing error: {e}')
+    
+    def _create_default_credentials(self):
+        """Crear archivo de credenciales por defecto"""
+        default_creds = '''
+# EarthCARE OADS Credentials
+# Please update with your actual credentials
+
+[credentials]
+username = "your_email@example.com"
+password = "your_password"
+
+[settings]
+max_retries = 3
+time_tolerance_minutes = 11
+'''
+        with open('oads_credentials.toml', 'w') as f:
+            f.write(default_creds)
+    
+    def _download_with_monitoring(self, downloader, csv_path):
+        """Ejecutar descarga con monitoreo de progreso"""
+        # Monkey patch para monitoreo de progreso
+        original_download_method = downloader._download_product_for_datetime
+        
+        def monitored_download(*args, **kwargs):
+            product = args[0] if args else 'Unknown'
+            date_str = args[1] if len(args) > 1 else 'Unknown'
+            
+            self.status['current_file'] = f'Downloading {product} for {date_str}'
+            self.status['completed'] += 1
+            
+            return original_download_method(*args, **kwargs)
+        
+        downloader._download_product_for_datetime = monitored_download
+        
+        # Ejecutar descarga
+        return downloader.download_from_csv(csv_path)
+    
+    def _create_earthcare_result_package(self, download_dir, stats):
+        """Crear paquete ZIP con resultados EarthCARE"""
+        zip_path = TEMP_DIR / f"{self.job_id}_earthcare_result.zip"
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Añadir archivos descargados
+            if download_dir.exists():
+                for file_path in download_dir.rglob('*'):
+                    if file_path.is_file():
+                        arcname = file_path.relative_to(download_dir)
+                        zipf.write(file_path, arcname)
+            
+            # Añadir log de descarga
+            log_file = download_dir / f'earthcare_{self.job_id}.log'
+            if log_file.exists():
+                zipf.write(log_file, 'download_log.txt')
+            
+            # Crear resumen de descarga
+            summary = self._create_download_summary(stats)
+            zipf.writestr('download_summary.txt', summary)
+        
+        return zip_path
+    
+    def _create_download_summary(self, stats):
+        """Crear resumen de la descarga"""
+        summary_lines = [
+            "EarthCARE Download Summary",
+            "=" * 50,
+            f"Job ID: {self.job_id}",
+            f"Collection: {self.collection}",
+            f"Baseline: {self.baseline}",
+            f"Products: {', '.join(self.products)}",
+            f"Date: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            "Statistics:",
+            f"- Total requests: {stats.get('total_requests', 0)}",
+            f"- Successful downloads: {stats.get('successful_downloads', 0)}",
+            f"- Failed downloads: {stats.get('failed_downloads', 0)}",
+            f"- Skipped existing: {stats.get('skipped_existing', 0)}",
+            ""
+        ]
+        
+        if stats.get('errors'):
+            summary_lines.append("Errors:")
+            for error in stats['errors'][:20]:  # Primeros 20 errores
+                summary_lines.append(f"- {error}")
+        
+        return "\n".join(summary_lines)
 
 @app.route('/')
 def index():
@@ -193,35 +357,52 @@ def index():
 
 @app.route('/process-csv', methods=['POST'])
 def process_csv():
-    """Endpoint principal para procesar CSV y iniciar descargas."""
+    """Endpoint principal para procesar CSV EarthCARE y iniciar descargas."""
     try:
-        if 'csv' not in request.files:
-            return jsonify({'error': 'No se encontró archivo CSV'}), 400
+        if 'file' not in request.files:
+            return jsonify({'error': 'No CSV file found'}), 400
         
-        csv_file = request.files['csv']
+        csv_file = request.files['file']
         if csv_file.filename == '':
-            return jsonify({'error': 'No se seleccionó archivo'}), 400
+            return jsonify({'error': 'No file selected'}), 400
         
-        # Leer contenido del CSV
-        csv_content = csv_file.read().decode('utf-8')
+        if not csv_file.filename.endswith('.csv'):
+            return jsonify({'error': 'Only CSV files are allowed'}), 400
         
-        # Crear job único
-        job_id = str(uuid.uuid4())
-        processor = DownloadProcessor(job_id)
+        # Obtener configuración EarthCARE del frontend
+        collection = request.form.get('collection', 'OPER')
+        baseline = request.form.get('baseline', 'B01')
         
-        # Parsear URLs del CSV
-        urls = processor.parse_csv_content(csv_content)
+        # Obtener productos seleccionados de checkboxes
+        products = []
+        for key, value in request.form.items():
+            if key.startswith('product_') and value == 'on':
+                product_code = key.replace('product_', '')
+                products.append(product_code)
         
-        if not urls:
-            return jsonify({'error': 'No se encontraron URLs válidas en el CSV'}), 400
+        if not products:
+            return jsonify({'error': 'Please select at least one product'}), 400
+        
+        # Guardar CSV temporalmente
+        job_id = str(uuid.uuid4())[:8]
+        job_dir = TEMP_DIR / job_id
+        job_dir.mkdir(exist_ok=True)
+        
+        csv_path = job_dir / 'input.csv'
+        csv_file.save(csv_path)
+        
+        logger.info(f'EarthCARE Job {job_id}: Starting - Collection: {collection}, Baseline: {baseline}, Products: {products}')
+        
+        # Crear procesador EarthCARE
+        processor = EarthCAREProcessor(job_id, collection, products, baseline, str(job_dir))
         
         # Iniciar procesamiento en hilo separado
         def process_job():
             try:
-                processor.process_downloads(urls)
+                processor.process_earthcare_csv(str(csv_path))
             except Exception as e:
-                logger.error(f"Error en job {job_id}: {str(e)}")
-                processor.status['errors'].append({'error': f'Error general: {str(e)}'})
+                logger.error(f"Error in EarthCARE job {job_id}: {str(e)}")
+                processor.status['errors'].append({'error': f'General error: {str(e)}'})
                 processor.status['finished'] = True
         
         thread = threading.Thread(target=process_job)
@@ -230,13 +411,16 @@ def process_csv():
         
         return jsonify({
             'job_id': job_id,
-            'total_urls': len(urls),
-            'message': 'Procesamiento iniciado'
+            'collection': collection,
+            'baseline': baseline,
+            'products': products,
+            'message': 'EarthCARE processing started',
+            'status_url': f'/status/{job_id}'
         })
         
     except Exception as e:
-        logger.error(f"Error en process_csv: {str(e)}")
-        return jsonify({'error': f'Error del servidor: {str(e)}'}), 500
+        logger.error(f"Error in process_csv: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/job-status/<job_id>')
 def job_status(job_id):
